@@ -1,275 +1,68 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="tr">
+<meta charset="UTF-8">
 <head>
-  <meta http-equiv='content-type' value='text/html;charset=utf8'>
-  <meta name='generator' value='Ronn/v0.7.3 (http://github.com/rtomayko/ronn/tree/0.7.3)'>
-  <title>uech(1) - yerelde, uzakta ve yerelde çalıştır</title>
-  <style type='text/css' media='all'>
-  /* style: man */
-  body#manpage {margin:0}
-  .mp {max-width:100ex;padding:0 9ex 1ex 4ex}
-  .mp p,.mp pre,.mp ul,.mp ol,.mp dl {margin:0 0 20px 0}
-  .mp h2 {margin:10px 0 0 0}
-  .mp > p,.mp > pre,.mp > ul,.mp > ol,.mp > dl {margin-left:8ex}
-  .mp h3 {margin:0 0 0 4ex}
-  .mp dt {margin:0;clear:left}
-  .mp dt.flush {float:left;width:8ex}
-  .mp dd {margin:0 0 0 9ex}
-  .mp h1,.mp h2,.mp h3,.mp h4 {clear:left}
-  .mp pre {margin-bottom:20px}
-  .mp pre+h2,.mp pre+h3 {margin-top:22px}
-  .mp h2+pre,.mp h3+pre {margin-top:5px}
-  .mp img {display:block;margin:auto}
-  .mp h1.man-title {display:none}
-  .mp,.mp code,.mp pre,.mp tt,.mp kbd,.mp samp,.mp h3,.mp h4 {font-family:monospace;font-size:14px;line-height:1.42857142857143}
-  .mp h2 {font-size:16px;line-height:1.25}
-  .mp h1 {font-size:20px;line-height:2}
-  .mp {text-align:justify;background:#fff}
-  .mp,.mp code,.mp pre,.mp pre code,.mp tt,.mp kbd,.mp samp {color:#131211}
-  .mp h1,.mp h2,.mp h3,.mp h4 {color:#030201}
-  .mp u {text-decoration:underline}
-  .mp code,.mp strong,.mp b {font-weight:bold;color:#131211}
-  .mp em,.mp var {font-style:italic;color:#232221;text-decoration:none}
-  .mp a,.mp a:link,.mp a:hover,.mp a code,.mp a pre,.mp a tt,.mp a kbd,.mp a samp {color:#0000ff}
-  .mp b.man-ref {font-weight:normal;color:#434241}
-  .mp pre {padding:0 4ex}
-  .mp pre code {font-weight:normal;color:#434241}
-  .mp h2+pre,h3+pre {padding-left:0}
-  ol.man-decor,ol.man-decor li {margin:3px 0 10px 0;padding:0;float:left;width:33%;list-style-type:none;text-transform:uppercase;color:#999;letter-spacing:1px}
-  ol.man-decor {width:100%}
-  ol.man-decor li.tl {text-align:left}
-  ol.man-decor li.tc {text-align:center;letter-spacing:4px}
-  ol.man-decor li.tr {text-align:right;float:right}
+  <title>Uech</title>
+
+  <meta name=viewport content="width=device-width, initial-scale=1">
+
+  <style type="text/css">
+    html {
+      position: relative;
+      min-height: 100%;
+    }
+
+    body {
+      font-family: monospace;
+      font-size: 14px;
+      margin: 0 0 50px;
+    }
+
+    footer {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      height: 50px;
+      line-height: 50px;
+      text-align: center;
+      width: 100%;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    a:visited {
+      color: blue;
+    }
+
+    ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    li {
+      margin: 1em;
+      padding: 0;
+    }
   </style>
 </head>
-<!--
-  The following styles are deprecated and will be removed at some point:
-  div#man, div#man ol.man, div#man ol.head, div#man ol.man.
 
-  The .man-page, .man-decor, .man-head, .man-foot, .man-title, and
-  .man-navigation should be used instead.
--->
-<body id='manpage'>
-  <div class='mp' id='man'>
+<body>
+  <ul>
+    <li>
+      <a href="man/">uech(1)</a>
+    </li>
+  </ul>
 
-  <div class='man-navigation' style='display:none'>
-    <a href="#NAME">NAME</a>
-    <a href="#SYNOPSIS">SYNOPSIS</a>
-    <a href="#DESCRIPTION">DESCRIPTION</a>
-    <a href="#OPTIONS">OPTIONS</a>
-    <a href="#EXAMPLES">EXAMPLES</a>
-    <a href="#ENVIRONMENT">ENVIRONMENT</a>
-    <a href="#BUGS">BUGS</a>
-    <a href="#COPYRIGHT">COPYRIGHT</a>
-    <a href="#SEE-ALSO">SEE ALSO</a>
-  </div>
-
-  <ol class='man-decor man-head man head'>
-    <li class='tl'>uech(1)</li>
-    <li class='tc'></li>
-    <li class='tr'>uech(1)</li>
-  </ol>
-
-  <h2 id="NAME">NAME</h2>
-<p class="man-name">
-  <code>uech</code> - <span class="man-whatis">yerelde, uzakta ve yerelde çalıştır</span>
-</p>
-
-<h2 id="SYNOPSIS">SYNOPSIS</h2>
-
-<p><code>uech</code> [<var>seçenek</var>...] [<var>kullanıcı</var>@]<var>konak</var>[:<var>port</var>] <var>program</var> [<var>argüman</var>...]<br /></p>
-
-<h2 id="DESCRIPTION">DESCRIPTION</h2>
-
-<p><strong>Uech</strong> yerelde kayıtlı bulunan bir programı sırasıyla yerelde, uzak konakta ve
-tekrar yerelde çalıştırır.  Uzağa geçmeden önce programın kendisiyle birlikte,
-isteğe bağlı olarak, programın bulunduğu dizin veya üst dizinleri de ("çevre")
-karşı tarafa kopyalar ve tekrar yerele geçildiğinde uzağa kopyalanan bu çevreyi
-yerele geri taşır.  Program çalıştırılırken hangi fazda bulunduğunu komut
-satırında geçilen ilk argümanın sırasıyla aşağıda listelenen değerleriyle
-öğrenir:</p>
-
-<ul>
-<li><p><code>LOCAL-</code>: Yerelde ilk faz</p></li>
-<li><p><code>REMOTE</code>: Uzakta</p></li>
-<li><p><code>LOCAL+</code>: Yerelde son faz</p></li>
-</ul>
-
-
-<p><strong>Uech</strong> açık uçlu bir araçtır.  Programın çalıştırılabilir bir dosya olması
-dışında ne yaptığıyla ilgilenmez ve onu daima yukarıda listelenen argümanlarla 3
-kez çalıştırır.  Komut satırında programa ilave olarak verilen argümanlar varsa
-bunlar da ikinci pozisyonel argümandan itibaren programa geçilir.</p>
-
-<p>Bazı programlar çalıştırılırken dış dosyalara ihtiyaç duyabilir veya uzakta
-çalıştırdığımız programın ürettiği dosyaları aynı mekanizmayla yerele geri
-taşımak isteyebiliriz.  Bu amaçla <strong>Uech</strong>, "programın çevresi" olarak
-adlandırılan göreceli alanı hesaplanmasında <code>-radius</code> seçeneğini dikkate alır.
-Öntanımlı olarak program çevresiz kabul edilir (yarıçap <code>0</code>) ve yerelden uzağa
-geçilirken sadece programın kendisi kopyalanır.  Bu davranış hakkında ayrıntılı
-bilgi edinmek için lütfen <strong>OPTIONS</strong> bölümünde ilgili seçenekleri okuyun.</p>
-
-<h2 id="OPTIONS">OPTIONS</h2>
-
-<ul>
-<li><p><code>-radius=&lt;radius></code>:
-Programın bulunduğu dizin merkez alındığında dosya taşımada esas alınacak
-çevreyi ("program çevresi") belirleyen yarıçap.  Tam sayı değer alır.
-Öntanımlı yarıçap olan <code>0</code> değerinde karşı tarafa sadece program yüklenir ve
-dönüşte bir indirme işlemi yapılmaz.  Yarıçap <code>1</code> ise program çevresi
-programın bulunduğu dizindir (göreceli olarak <code>.</code>); <code>2</code> ise programın
-bulunduğu dizinin bir üstü dizindir (göreceli olarak <code>..</code>).  Örnek yarıçap
-değerleri ve program çevreleri:</p>
-
-<ul>
-<li><code>0</code>: çevre yok</li>
-<li><code>1</code>: <code>.</code></li>
-<li><code>2</code>: <code>..</code></li>
-<li><code>3</code>: <code>../..</code></li>
-<li><code>4</code>: <code>../../..</code></li>
-</ul>
-
-
-<p>Öntanımlı yarıçap <code>0</code>'dır.  Yarıçap bu seçenekle açık şekilde verilmemişse
-Git depoları için kullanılabilecek <code>-git</code> seçeneğiyle yarıçap değeri
-otomatik hesaplanır.</p></li>
-<li><p><code>-git</code>:
-Program bir Git deposunda kayıtlıysa bu seçenek iki görev icra eder:</p>
-
-<ul>
-<li><p>Program çevresini deponun tepe dizini olacak şekilde ayarlar.  Örneğin
-aşağıdaki depo düzeninde yarıçap <code>3</code> olarak hesaplanır.</p>
-
-<pre><code>      .
-      ├── dizin1
-      │   └── dizin2
-      │       └── çalıştırılabilir dosya
-      └── .git
-</code></pre></li>
-<li><p>Git tarafından göz ardı edilen dosyalar (<span class="man-ref">gitignore<span class="s">(5)</span></span>) karşı tarafa dosya
-yüklenirken de göz ardı edilir.</p></li>
-</ul>
-</li>
-<li><p><code>-config=&lt;file></code>:
-SSH istemci yapılandırma dosyası.  Ayrıntılı bilgi için <span class="man-ref">ssh_config<span class="s">(5)</span></span>
-kılavuz sayfasını okuyun.</p></li>
-<li><p><code>-noreuse</code>:
-SSH bağlantısını yeniden kullanmaya çalışma.  Normalde program SSH
-bağlantısını bir seferliğine oluşturur ve SSH'ın çağrıldığı müteakip
-durumlarda başlangıçta kurulan bağlantıyı kullanır.  Bu sayede hem bağlantı
-hızlanır hem de SSH parolası gerektiren konaklarda parola sadece bir kez
-sorulur.</p></li>
-<li><p><code>-local</code>:
-Yerel kipte çalıştır.  Konak argümanı göz ardı edilir ve SSH bağlantısı
-yapılmaz.</p></li>
-<li><p><code>-buffer=&lt;dizin></code>:
-Karşı tarafta kullanılacak tampon dizin.  Tampon dizin mutlak veya göreceli
-olarak tanımlanabilir.   Göreceli ise taban dizin karşı tarafın (SSH
-kullanıcısına ait) <code>$HOME</code> dizinidir.</p>
-
-<p>Normalde <strong>Uech</strong> tampon dizini <span class="man-ref">mktemp<span class="s">(1)</span></span> ile güvenli şekilde rastgele
-oluşturur.  Yeri önceden bilinen bir tampon alanına ihtiyacınız varsa bu
-seçeneği kullanın.  Özellikle <code>-keep</code> seçeneği ile birlikte yararlı
-olabilir.</p></li>
-<li><p><code>-keep</code>:
-Çıkışta tampon dizini koru.</p></li>
-<li><p><code>-clean</code>:
-Tampon dizini oluşturmadan önce aynı isimde bir dizin varsa kaldır.  Bu
-seçenek <code>-buffer</code> seçeneğinin kullanılmasını gerektirir.</p></li>
-<li><p><code>-debug</code>:
-Hata ayıklamada yararlı olabilecek ek bilgiler görüntüle.</p></li>
-<li><p><code>-nocolor</code>:
-Ekran çıktılarını renklendirme.</p></li>
-<li><p><code>-version</code>:
-Sürüm bilgisi ver.</p></li>
-<li><p><code>-help</code>:
-Kısa yardım bilgileri görüntüle.</p></li>
-</ul>
-
-
-<h2 id="EXAMPLES">EXAMPLES</h2>
-
-<p>Yerelde bir program derle, üzakta çalıştır, üretilen veriyi yerele kopyala:</p>
-
-<pre><code>    $ cat program
-    #!/bin/bash
-    case $1 in
-    LOCAL-)
-            echo Derle
-            go build /uzakta/derlenmemesi/gereken/üreteç
-            ;;
-    REMOTE)
-            echo Çalıştır
-            ./üreteç &gt;büyük_veri
-            ;;
-    LOCAL+)
-            echo Raporla
-            du -h büyük_veri;;
-    esac
-
-    $ uech example.com program
-    -----&gt; LOCAL-
-    Derle
-    ······ Upload
-    -----&gt; REMOTE
-    Çalıştır
-    ······ Download
-    -----&gt; LOCAL+
-    Raporla
-    100M    büyük_veri
-</code></pre>
-
-<p>Git deposundan çalıştır:</p>
-
-<pre><code>    $ tree -a
-    .
-    ├── bir
-    │   └── program
-    └── .git
-        ├──
-    ...
-    $ uech -git example.com bir/example.com
-</code></pre>
-
-<p>Aynı dizinde yarıçap vererek çalıştır (dikkat! <code>gitignore</code> dikkate alınmaz):</p>
-
-<pre><code>    $ uech -radius=2 example.com bir/program
-</code></pre>
-
-<h2 id="ENVIRONMENT">ENVIRONMENT</h2>
-
-<dl>
-<dt><code>UECH_REMOTE</code></dt><dd>Mutlak dosya yolu biçiminde tampon dizini.  Normalde program tarafından
-atanan bu değişken aynı zamanda programın karşı tarafta olduğunu bildirir.</dd>
-</dl>
-
-
-<h2 id="BUGS">BUGS</h2>
-
-<p><strong>Uech</strong> SSH, Rsync ve GNU coreutils etrafında Bash 4 ile yazılan, görece
-taşınabilir nitelikte bir kabuk betiği olmakla birlikte adı geçen araçlar her
-ortamda bulunmayabilir.</p>
-
-<p>Ayrıca <strong>Uech</strong> temelde SSH ve Rsync'ı sarmalayan bir program olduğundan
-sarmalayıcı programlara özgü zaaflar sergileyebilir.  Örneğin SSH yapılandırma
-dosyasındaki ayarlar program tarafından bilinmediğinden SSH yapılandırmasının
-<code>-config</code> ile verildiği durumlarda beklenmeyen sonuçlar alabilirsiniz.</p>
-
-<h2 id="COPYRIGHT">COPYRIGHT</h2>
-
-<p>Uech Copyright (C) 2017 Recai Oktaş <a href="http://r.oktas.us" data-bare-link="true">http://r.oktas.us</a></p>
-
-<h2 id="SEE-ALSO">SEE ALSO</h2>
-
-<p><span class="man-ref">ssh_config<span class="s">(5)</span></span>, <span class="man-ref">rsync<span class="s">(1)</span></span>, <span class="man-ref">ssh<span class="s">(1)</span></span></p>
-
-
-  <ol class='man-decor man-foot man foot'>
-    <li class='tl'></li>
-    <li class='tc'>August 2017</li>
-    <li class='tr'>uech(1)</li>
-  </ol>
-
-  </div>
+  <footer>
+    Bir <a href="http://alaturka.io" target="_TOP">Alaturka</a> yapımı
+  </footer>
 </body>
 </html>
