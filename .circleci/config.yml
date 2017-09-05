@@ -1,0 +1,18 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: debian:sid
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            apt-get update -y
+            apt-get install -y rsync git shellcheck bats
+      - run:
+          name: Lint with Shellcheck
+          command: shellcheck uech tests/*.bash
+      - run:
+          name: Test with Bats
+          command: bats tests

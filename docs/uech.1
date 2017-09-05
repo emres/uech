@@ -1,0 +1,208 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "UECH" "1" "August 2017" "" ""
+.
+.SH "NAME"
+\fBuech\fR \- yerelde, uzakta ve yerelde çalıştır
+.
+.SH "SYNOPSIS"
+\fBuech\fR [\fIseçenek\fR\.\.\.] [\fIkullanıcı\fR@]\fIkonak\fR[:\fIport\fR] \fIprogram\fR [\fIargüman\fR\.\.\.]
+.
+.br
+.
+.SH "DESCRIPTION"
+\fBUech\fR yerelde kayıtlı bulunan bir programı sırasıyla yerelde, uzak konakta ve tekrar yerelde çalıştırır\. Uzağa geçmeden önce programın kendisiyle birlikte, isteğe bağlı olarak, programın bulunduğu dizin veya üst dizinleri de ("çevre") karşı tarafa kopyalar ve tekrar yerele geçildiğinde uzağa kopyalanan bu çevreyi yerele geri taşır\. Program çalıştırılırken hangi fazda bulunduğunu komut satırında geçilen ilk argümanın sırasıyla aşağıda listelenen değerleriyle öğrenir:
+.
+.IP "\(bu" 4
+\fBLOCAL\-\fR: Yerelde ilk faz
+.
+.IP "\(bu" 4
+\fBREMOTE\fR: Uzakta
+.
+.IP "\(bu" 4
+\fBLOCAL+\fR: Yerelde son faz
+.
+.IP "" 0
+.
+.P
+\fBUech\fR açık uçlu bir araçtır\. Programın çalıştırılabilir bir dosya olması dışında ne yaptığıyla ilgilenmez ve onu daima yukarıda listelenen argümanlarla 3 kez çalıştırır\. Komut satırında programa ilave olarak verilen argümanlar varsa bunlar da ikinci pozisyonel argümandan itibaren programa geçilir\.
+.
+.P
+Bazı programlar çalıştırılırken dış dosyalara ihtiyaç duyabilir veya uzakta çalıştırdığımız programın ürettiği dosyaları aynı mekanizmayla yerele geri taşımak isteyebiliriz\. Bu amaçla \fBUech\fR, "programın çevresi" olarak adlandırılan göreceli alanı hesaplanmasında \fB\-radius\fR seçeneğini dikkate alır\. Öntanımlı olarak program çevresiz kabul edilir (yarıçap \fB0\fR) ve yerelden uzağa geçilirken sadece programın kendisi kopyalanır\. Bu davranış hakkında ayrıntılı bilgi edinmek için lütfen \fBOPTIONS\fR bölümünde ilgili seçenekleri okuyun\.
+.
+.SH "OPTIONS"
+.
+.IP "\(bu" 4
+\fB\-radius=<radius>\fR: Programın bulunduğu dizin merkez alındığında dosya taşımada esas alınacak çevreyi ("program çevresi") belirleyen yarıçap\. Tam sayı değer alır\. Öntanımlı yarıçap olan \fB0\fR değerinde karşı tarafa sadece program yüklenir ve dönüşte bir indirme işlemi yapılmaz\. Yarıçap \fB1\fR ise program çevresi programın bulunduğu dizindir (göreceli olarak \fB\.\fR); \fB2\fR ise programın bulunduğu dizinin bir üstü dizindir (göreceli olarak \fB\.\.\fR)\. Örnek yarıçap değerleri ve program çevreleri:
+.
+.IP "\(bu" 4
+\fB0\fR: çevre yok
+.
+.IP "\(bu" 4
+\fB1\fR: \fB\.\fR
+.
+.IP "\(bu" 4
+\fB2\fR: \fB\.\.\fR
+.
+.IP "\(bu" 4
+\fB3\fR: \fB\.\./\.\.\fR
+.
+.IP "\(bu" 4
+\fB4\fR: \fB\.\./\.\./\.\.\fR
+.
+.IP "" 0
+.
+.IP
+Öntanımlı yarıçap \fB0\fR\'dır\. Yarıçap bu seçenekle açık şekilde verilmemişse Git depoları için kullanılabilecek \fB\-git\fR seçeneğiyle yarıçap değeri otomatik hesaplanır\.
+.
+.IP "\(bu" 4
+\fB\-git\fR: Program bir Git deposunda kayıtlıysa bu seçenek iki görev icra eder:
+.
+.IP "\(bu" 4
+Program çevresini deponun tepe dizini olacak şekilde ayarlar\. Örneğin aşağıdaki depo düzeninde yarıçap \fB3\fR olarak hesaplanır\.
+.
+.IP "" 4
+.
+.nf
+
+      \.
+      ├── dizin1
+      │   └── dizin2
+      │       └── çalıştırılabilir dosya
+      └── \.git
+.
+.fi
+.
+.IP "" 0
+
+.
+.IP "\(bu" 4
+Git tarafından göz ardı edilen dosyalar (gitignore(5)) karşı tarafa dosya yüklenirken de göz ardı edilir\.
+.
+.IP "" 0
+
+.
+.IP "\(bu" 4
+\fB\-config=<file>\fR: SSH istemci yapılandırma dosyası\. Ayrıntılı bilgi için ssh_config(5) kılavuz sayfasını okuyun\.
+.
+.IP "\(bu" 4
+\fB\-noreuse\fR: SSH bağlantısını yeniden kullanmaya çalışma\. Normalde program SSH bağlantısını bir seferliğine oluşturur ve SSH\'ın çağrıldığı müteakip durumlarda başlangıçta kurulan bağlantıyı kullanır\. Bu sayede hem bağlantı hızlanır hem de SSH parolası gerektiren konaklarda parola sadece bir kez sorulur\.
+.
+.IP "\(bu" 4
+\fB\-local\fR: Yerel kipte çalıştır\. Konak argümanı göz ardı edilir ve SSH bağlantısı yapılmaz\.
+.
+.IP "\(bu" 4
+\fB\-buffer=<dizin>\fR: Karşı tarafta kullanılacak tampon dizin\. Tampon dizin mutlak veya göreceli olarak tanımlanabilir\. Göreceli ise taban dizin karşı tarafın (SSH kullanıcısına ait) \fB$HOME\fR dizinidir\.
+.
+.IP
+Normalde \fBUech\fR tampon dizini mktemp(1) ile güvenli şekilde rastgele oluşturur\. Yeri önceden bilinen bir tampon alanına ihtiyacınız varsa bu seçeneği kullanın\. Özellikle \fB\-keep\fR seçeneği ile birlikte yararlı olabilir\.
+.
+.IP "\(bu" 4
+\fB\-keep\fR: Çıkışta tampon dizini koru\.
+.
+.IP "\(bu" 4
+\fB\-clean\fR: Tampon dizini oluşturmadan önce aynı isimde bir dizin varsa kaldır\. Bu seçenek \fB\-buffer\fR seçeneğinin kullanılmasını gerektirir\.
+.
+.IP "\(bu" 4
+\fB\-debug\fR: Hata ayıklamada yararlı olabilecek ek bilgiler görüntüle\.
+.
+.IP "\(bu" 4
+\fB\-nocolor\fR: Ekran çıktılarını renklendirme\.
+.
+.IP "\(bu" 4
+\fB\-version\fR: Sürüm bilgisi ver\.
+.
+.IP "\(bu" 4
+\fB\-help\fR: Kısa yardım bilgileri görüntüle\.
+.
+.IP "" 0
+.
+.SH "EXAMPLES"
+Yerelde bir program derle, üzakta çalıştır, üretilen veriyi yerele kopyala:
+.
+.IP "" 4
+.
+.nf
+
+    $ cat program
+    #!/bin/bash
+    case $1 in
+    LOCAL\-)
+            echo Derle
+            go build /uzakta/derlenmemesi/gereken/üreteç
+            ;;
+    REMOTE)
+            echo Çalıştır
+            \./üreteç >büyük_veri
+            ;;
+    LOCAL+)
+            echo Raporla
+            du \-h büyük_veri;;
+    esac
+
+    $ uech example\.com program
+    \-\-\-\-\-> LOCAL\-
+    Derle
+    ······ Upload
+    \-\-\-\-\-> REMOTE
+    Çalıştır
+    ······ Download
+    \-\-\-\-\-> LOCAL+
+    Raporla
+    100M    büyük_veri
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Git deposundan çalıştır:
+.
+.IP "" 4
+.
+.nf
+
+    $ tree \-a
+    \.
+    ├── bir
+    │   └── program
+    └── \.git
+        ├──
+    \.\.\.
+    $ uech \-git example\.com bir/example\.com
+.
+.fi
+.
+.IP "" 0
+.
+.P
+Aynı dizinde yarıçap vererek çalıştır (dikkat! \fBgitignore\fR dikkate alınmaz):
+.
+.IP "" 4
+.
+.nf
+
+    $ uech \-radius=2 example\.com bir/program
+.
+.fi
+.
+.IP "" 0
+.
+.SH "ENVIRONMENT"
+.
+.TP
+\fBUECH_REMOTE\fR
+Mutlak dosya yolu biçiminde tampon dizini\. Normalde program tarafından atanan bu değişken aynı zamanda programın karşı tarafta olduğunu bildirir\.
+.
+.SH "BUGS"
+\fBUech\fR SSH, Rsync ve GNU coreutils etrafında Bash 4 ile yazılan, görece taşınabilir nitelikte bir kabuk betiği olmakla birlikte adı geçen araçlar her ortamda bulunmayabilir\.
+.
+.P
+Ayrıca \fBUech\fR temelde SSH ve Rsync\'ı sarmalayan bir program olduğundan sarmalayıcı programlara özgü zaaflar sergileyebilir\. Örneğin SSH yapılandırma dosyasındaki ayarlar program tarafından bilinmediğinden SSH yapılandırmasının \fB\-config\fR ile verildiği durumlarda beklenmeyen sonuçlar alabilirsiniz\.
+.
+.SH "COPYRIGHT"
+Uech Copyright (C) 2017 Recai Oktaş \fIhttp://r\.oktas\.us\fR
+.
+.SH "SEE ALSO"
+ssh_config(5), rsync(1), ssh(1)

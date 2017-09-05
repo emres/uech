@@ -1,0 +1,809 @@
+#!/usr/bin/env bash
+
+set -euo pipefail; [[ -z ${TRACE:-} ]] || set -x
+
+if [[ ! $BASH_VERSION =~ ^4 ]]; then
+	echo >&2 "Bash 4 required"
+	exit 1
+fi
+
+# Program name
+readonly PROGNAME=${0##*/}
+
+# Version
+readonly VERSION=0.0
+
+# Common functions for both sides (local and remote)
+anywhere() {
+	# Color palette
+	declare -Ag color=(
+		[bug]=$'\e[1;38;5;9m'
+		[debug]=$'\e[1;38;5;15m'
+		[reset]=$'\e[0m'
+
+		[bold]=""
+		[normal]=""
+	)
+
+	# UI helpers
+
+	cry() {
+		echo -e >&2 "$*"
+	}
+
+	die() {
+		cry "$@"
+		exit 1
+	}
+
+	bug() {
+		echo -e >&2 "${color[bug]}BUG: $*${color[reset]}\nPlease report	the issue."
+		exit 128
+	}
+
+	debug() {
+		:
+	}
+
+	indent() {
+		sed 's/^/       /'
+	}
+
+	usage() {
+		cry "$PROGNAME [<flags>...] [<user>@]<host>[:<port>] <executable> [<arguments>...]"
+		cry "See $PROGNAME(1) for detailed information."
+		exit "${1:-0}"
+	}
+
+	# Self template
+
+	declare -ag args=() # command line arguments vector
+
+	# Main template (all functions defined at the relevant side)
+	self.main() {
+		args=("$@")
+
+		self.flags
+		self.args
+
+		self.init
+
+		self.run "${args[@]}"
+	}
+
+	# Initialize before run (overwritten by the current side)
+	self.init() {
+		super.init
+	}
+
+	# Shutdown after run (overwritten by the current side)
+	self.shutdown() {
+		super.shutdown
+	}
+
+	# Enter the working directory (so called "center")
+	self.enter() {
+		pushd "${self[center]}" >/dev/null || die "Cannot chdir: '${self[center]}'"
+	}
+
+	# Leave the working directory
+	self.leave() {
+		popd >/dev/null
+	}
+
+	# Do the given action at the center
+	self.do() {
+		local heading=$1
+		shift
+
+		self.enter
+
+		echo -e >&2 "${color[bold]}-----> ${heading}${color[reset]}${color[normal]}"
+		"$@" > >(indent) 2> >(indent >&2)
+		echo -e  >&2 "${color[reset]}"
+
+		self.leave
+	}
+
+	# Dump self
+	self.debug() {
+		local key
+		for key in "${!self[@]}"; do
+			printf "%10s:  %s\n" "$key" "${self[$key]}"
+		done >&2
+	}
+
+	# Base functions which should not be overwritten (hence super.)
+
+	declare -ag cleanup=()
+
+	super.shutdown() {
+		rm -rf -- "${cleanup[@]}"
+	}
+
+	super.init() {
+		# Reset color palette
+		if [[ -n ${self[nocolor]} ]]; then
+			local key
+			for key in "${!color[@]}"; do
+				color[$key]=
+			done
+		fi
+
+		# Setup conditional UI
+
+		if [[ -n ${self[debug]} ]]; then
+			debug() {
+				echo -e >&2 "${color[debug]}$*${color[reset]}"
+			}
+		fi
+
+		# Register shutdown
+		declare -g err
+
+		trap '
+			err=$?
+			self.shutdown || true
+			exit "$err"
+		' EXIT HUP INT QUIT TERM
+	}
+
+	# Load this module
+
+	self.load() {
+		# Setup coreutils for Mac OS X
+		if [[ $OSTYPE == darwin ]]; then
+			export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
+
+			command -v greadlink >/dev/null || die "GNU coreutils required"
+			alias readlink=greadlink
+
+			command -v grealpath >/dev/null || die "GNU coreutils required"
+			alias realpath=grealpath
+		fi
+	}
+
+	self.load
+}
+
+# Functions for remote side
+there() {
+	# Self object at the remote side
+	declare -Ag self=(
+		[buffer]=""  # buffer directory
+		[debug]=""   # debug mode?
+		[exe]=""     # absolute path of the executable
+		[keep]=""    # keep remote store?
+		[local]=""   # local mode?
+		[nocolor]="" # no color?
+	)
+
+	# Process options
+	self.flags() {
+		set -- "${args[@]}"
+
+		local arg
+		while [[ $# -gt 0 ]]; do
+			arg=$1
+
+			case $arg in
+			-local)
+				self[local]=true
+				;;
+			-keep)
+				self[keep]=true
+				;;
+			-nocolor)
+				self[nocolor]=true
+				;;
+			-debug)
+				self[debug]=true
+				;;
+			-*)
+				bug "Unrecognized flag: $arg"
+				;;
+			*)
+				break
+				;;
+			esac
+
+			shift
+		done
+
+		args=("$@")
+	}
+
+	# Process (non-flag) arguments
+	self.args() {
+		set -- "${args[@]}"
+
+		[[ $# -ge 1 ]] || bug "Missing arguments"
+
+		local exe=$1
+		shift
+
+		[[ -f $exe ]] || bug "No such file: '$exe'"
+		[[ -x $exe ]] || bug "Not an executable: '$exe'"
+		[[ $exe != /* ]] || bug "Must be a relative path: '$exe'"
+
+		# Convert the path of executable to an absolute path
+		self[exe]=$(readlink -f "$exe")
+
+		args=("$@")
+	}
+
+	# Post initialization after processing options and arguments
+	self.init() {
+		super.init
+
+		# Calculate center
+		self[center]=${self[exe]%/*}
+	}
+
+	# Shutdown procedure
+	self.shutdown() {
+		super.shutdown
+	}
+
+	# Run the executable
+	self.run() {
+		if [[ -n ${self[debug]} ]]; then
+			debug "Remote"
+			self.debug
+		fi
+
+		self.do "Remote" "${self[exe]}" REMOTE "$@"
+	}
+
+	# Load this module
+
+	self.load() {
+		# Setup special colors for this side
+		color[bold]=$'\e[1;38;5;14m'
+		color[normal]=$'\e[38;5;14m'
+
+		# Chdir to buffer directory at start
+		local buffer=${UECH_REMOTE:?}
+
+		[[ -d $buffer ]] || bug "No buffer directory found: '$buffer'"
+		pushd "$buffer" >/dev/null || die "Cannot chdir to: '$buffer'"
+
+		self[buffer]=$buffer
+	}
+
+	self.load
+}
+
+# Functions for local side
+here() {
+	# Self object at the local side
+	declare -Ag self=(
+		[buffer]=""  # buffer directory
+		[center]=""  # absolute path of the working directory
+		[clean]=""   # clean remote store before?
+		[config]=""  # ssh config file
+		[debug]=""   # debug mode?
+		[exe]=""     # absolute path of the executable
+		[git]=""     # treat as a Git repository?
+		[host]=""    # ssh host
+		[keep]=""    # keep remote store?
+		[local]=""   # local mode?
+		[nocolor]="" # no color?
+		[noreuse]="" # no reuse ssh connection?
+		[radius]=""  # radius from the working directory
+	)
+
+	declare -ag flags=() # flags to transfer to the remote side
+
+	# Process options
+	self.flags() {
+		set -- "${args[@]}"
+
+		local arg
+		while [[ $# -gt 0 ]]; do
+			arg=$1
+
+			case $arg in
+			-radius|-radius=*)
+				local value
+				case $arg in
+				*=*)
+					value=${arg#*=}
+					;;
+				*)
+					shift
+					value=${1:-}
+					;;
+				esac
+				[[ -n $value ]] || die "Argument required for flag: '-radius'"
+				[[ $value =~ [0-9]+ ]] || die "Radius must be an integer: '$value'"
+
+				self[radius]=$value
+				;;
+			-git)
+				self[git]=true
+				;;
+			-buffer|-buffer=*)
+				local value
+				case $arg in
+				*=*)
+					value=${arg#*=}
+					;;
+				*)
+					shift
+					value=${1:-}
+					;;
+				esac
+				[[ -n $value ]] || die "Argument required for flag: '-buffer'"
+
+				self[buffer]=$value
+				;;
+			-keep)
+				self[keep]=true
+				flags+=("$arg")
+				;;
+			-config|-config=*)
+				local value
+				case $arg in
+				*=*)
+					value=${arg#*=}
+					;;
+				*)
+					shift
+					value=${1:-}
+					;;
+				esac
+				[[ -n $value ]] || die "Argument required for flag: '-config'"
+				[[ -f $value ]] || die "No such file: '$value'"
+
+				self[config]=$(readlink -f "$value")
+				;;
+			-local)
+				self[local]=true
+				flags+=("$arg")
+				;;
+			-clean)
+				self[clean]=true
+				;;
+			-nocolor)
+				self[nocolor]=true
+				flags+=("$arg")
+				;;
+			-noreuse)
+				self[noreuse]=true
+				;;
+			-debug)
+				self[debug]=true
+				flags+=("$arg")
+				;;
+			-version)
+				echo "$VERSION"
+				exit 0
+				;;
+			-help)
+				usage
+				;;
+			-*)
+				die "Unrecognized flag: '$arg'"
+				;;
+			*)
+				break
+				;;
+			esac
+
+			shift
+		done
+
+		args=("$@")
+	}
+
+	# Process (non-flag) arguments
+	self.args() {
+		set -- "${args[@]}"
+
+		[[ $# -ge 2 ]] || usage 2
+
+		local host=$1
+		shift
+
+		[[ -n $host ]] || die "No host given"
+
+		self[host]=$host
+
+		local exe=$1
+		shift
+
+		[[ -f $exe ]] || die "No such file: '$exe'"
+		[[ -x $exe ]] || die "Not an executable: '$exe'"
+
+		# Convert the path of executable to an absolute path
+		self[exe]=$(readlink -f "$exe")
+
+		args=("$@")
+	}
+
+	# Create buffer beforehand
+	self.buffer() {
+		local buffer=${self[buffer]}
+
+		if [[ -z $buffer ]]; then
+			if [[ -z ${self[local]} ]]; then
+				buffer=$(
+					ssh.run /bin/mktemp -d -t x.XXXXXX
+				)
+			else
+				buffer=$(/bin/mktemp -d -t x.XXXXXX)
+			fi
+		else
+			if [[ -z ${self[local]} ]]; then
+				buffer=$(
+					ssh.run bash -e -s "$buffer" "${self[clean]}" <<-'EOF'
+						[[ -z "$2" ]] || rm -rf "${1:?}"
+						mkdir -m 700 -p "$1"
+						cd "$1"
+						echo "$PWD"
+					EOF
+				)
+			else
+				[[ $buffer = /* ]] || buffer="$HOME/$buffer"
+				[[ -z "${self[clean]}" ]] || rm -rf "${buffer:?}"
+				# shellcheck disable=2174
+				mkdir -m 700 -p "$buffer"
+			fi
+
+		fi || die "Cannot create buffer directory"
+
+		debug "Buffer successfully created: $buffer"
+
+		self[buffer]=$buffer
+	}
+
+	# Setup flags affected from the presence of a Git repository
+	self.gitflag() {
+		self.enter
+
+		local gitdir
+		if gitdir=$(git rev-parse --show-toplevel 2>/dev/null); then
+			# Sanity check
+			if git check-ignore -q --no-index "${self[exe]}"; then
+				cry "Executable must be tracked, otherwise it won't be copied to remote."
+				die "Git ignored executable: '${self[exe]}'"
+			fi
+			# Set radius to the repository depth
+			if [[ -z ${self[radius]} ]]; then
+				self[radius]=$(radius "${self[center]}" "$gitdir")
+			fi
+		else
+			self[git]=
+		fi
+
+		self.leave
+	}
+
+	# Post initialization after processing options and arguments
+	self.init() {
+		super.init
+
+		# Calculate center
+		self[center]=${self[exe]%/*}
+
+		if [[ -n ${self[clean]} ]] && [[ -z ${self[buffer]} ]]; then
+			die "Flag '-clean' must be used with '-buffer' flag"
+		fi
+
+		[[ -z ${self[git]} ]] || self.gitflag
+
+		[[ -n ${self[radius]} ]] || self[radius]=0
+
+		if [[ -z ${self[local]} ]]; then
+			ssh.init
+		fi
+
+		self.buffer
+	}
+
+	# Shutdown before exit
+	self.shutdown() {
+		if [[ -z ${self[keep]} ]]; then
+			if [[ -z ${self[local]} ]]; then
+				ssh.run rm -rf "${self[buffer]}"
+			else
+				rm -rf -- "${self[buffer]}"
+			fi
+		fi
+
+		if [[ -z ${self[local]} ]] && [[ -z ${self[noreuse]} ]]; then
+			ssh.shutdown
+		fi
+
+		super.shutdown
+	}
+
+	# Invoke this program at the remote side
+	self.remote() {
+		self.enter
+
+		local -a env=(
+			# An indicator that we are on the remote side
+			"UECH_REMOTE=${self[buffer]}"
+		)
+
+		local periphery
+		periphery=$(periphery "${self[radius]}")
+
+		# Convert executable path to a relative path
+		local exe
+		exe=$(realpath --relative-to="${periphery:-.}" "${self[exe]}")
+
+		if [[ -z ${self[local]} ]]; then
+			ssh.run env "${env[@]}" \
+				bash -s	-- "${flags[@]}" "$exe" "$@" <"$PROGFILE"
+		else
+			env "${env[@]}" \
+				bash -s	-- "${flags[@]}" "$exe" "$@" <"$PROGFILE"
+		fi
+
+		self.leave
+	}
+
+	# Upload files (including the executable) inside the periphery to the remote side
+	self.upload() {
+		local src
+		local dest
+
+		local periphery
+		periphery=$(periphery "${self[radius]}")
+
+		src=${periphery:-${self[exe]}}
+
+		if [[ -z ${self[local]} ]]; then
+			dest=${self[host]}:${self[buffer]}
+		else
+			dest=${self[buffer]}
+		fi
+
+		rsync.run "$src" "$dest"
+	}
+
+	# Download files inside the periphery from the remote side
+	self.download() {
+		local src
+		local dest
+
+		# XXX: Watch for the trailing slash
+		if [[ -z ${self[local]} ]]; then
+			src=${self[host]}:${self[buffer]}/
+		else
+			src=${self[buffer]}/
+		fi
+
+		local periphery
+		periphery=$(periphery "${self[radius]}")
+
+		dest=${periphery:-.}
+
+		rsync.run "$src" "$dest"
+	}
+
+	# Run the executable
+	self.run() {
+		if [[ -n ${self[debug]} ]]; then
+			debug "Local"
+			self.debug
+		fi
+
+		self.do "Local-" "${self[exe]}" LOCAL- "$@"
+		self.do "Upload" self.upload
+
+		self.remote "$@"
+
+		# If radius is zero, there is nothing at the remote side which needs to be downloaded
+		if [[ ${self[radius]} -gt 0 ]]; then
+			self.do "Download" self.download
+		fi
+		self.do "Local+" "${self[exe]}" LOCAL+ "$@"
+	}
+
+	# Wrap ssh
+
+	declare -ag ssh=() # argument vector which will be passed to SSH
+
+	# Build SSH flags
+	ssh.init() {
+		super.init
+
+		if [[ -n ${self[config]} ]]; then
+			ssh+=(
+				"-F"
+				"${self[config]}"
+			)
+		fi
+
+		[[ -z ${self[debug]} ]] || ssh+=("-v")
+
+		local host=${self[host]}
+
+		# Check if we have a composite hostname, e.g. user@host:port
+
+		local name=$host
+		name=${name##*@}; name=${name%%:*}
+
+		if [[ $name != "$host" ]]; then
+			if [[ $host =~ [@] ]]; then
+				local user=${host%%@*}
+
+				if [[ -z $user ]]; then
+					die "Malformed user specification: '$host'"
+				fi
+
+				ssh+=(
+					"-l"
+					"$user"
+				)
+
+			fi
+
+			if [[ $host =~ [:] ]]; then
+				local port=${host##*:}
+
+				if [[ -z $port ]] || [[ ! $port =~ ^[0-9]+$ ]]; then
+					die "Malformed port specification: '$host'"
+				fi
+
+				ssh+=(
+					"-p"
+					"$port"
+				)
+			fi
+
+			self[host]=$name
+		fi
+
+		[[ -n ${self[noreuse]} ]] || ssh.reuse
+	}
+
+	# Setup SSH to reuse connection
+	ssh.reuse() {
+		local tempdir
+
+		tempdir=$(/bin/mktemp -d -t ssh.XXXXXX) || die "Error creating a temp directory"
+		cleanup+=("$tempdir")
+
+		debug "Initiating SSH"
+
+		local ctrlpath="$tempdir/%r@%h:%p"
+
+		# shellcheck disable=SC2029
+		ssh "${ssh[@]}" -n -N -f -o ControlMaster=yes -o ControlPath="$ctrlpath" "${self[host]}"
+
+		ssh+=(
+			"-o"
+			"ControlPath=$ctrlpath"
+		)
+
+		# shellcheck disable=SC2029
+		ssh "${ssh[@]}" -q -O check "${self[host]}" 2>/dev/null || die "SSH master check failed"
+	}
+
+	# Invoke SSH with the self flags and host
+	ssh.run() {
+		debug "Invoking ssh:" "${ssh[@]}" "${self[host]}" "$@"
+		# shellcheck disable=SC2029
+		ssh "${ssh[@]}" "${self[host]}" "$@"
+	}
+
+	# Shutdown SSH connection
+	ssh.shutdown() {
+		# shellcheck disable=SC2029
+		ssh "${ssh[@]}" -q -O exit "${self[host]}"
+	}
+
+	# Wrap rsync
+
+	# Invoke Rsync with the self and SSH flags
+	rsync.run() {
+		local -a flags=(
+			"-a" # archive mode
+			"-z" # compress
+		)
+		if [[ -n ${self[git]} ]]; then
+			flags+=(
+				"-C"                 # ignore .git
+				"-f" ":- .gitignore" # ignore gitignored files
+			)
+		fi
+
+		[[ -z ${self[debug]} ]] || ssh+=(
+			"-v"
+			"--progress"
+		)
+
+		if [[ ${#ssh[@]} -gt 0 ]]; then
+			flags+=(
+				"-e"
+				"ssh $(join ' ' "${ssh[@]}")"
+			)
+		fi
+
+		debug "Invoking rsync:" "${flags[@]}" "$@"
+		rsync "${flags[@]}" "$@"
+	}
+
+	# Local helpers
+
+	# Join given parameters using the separator
+	join() {
+		local separator=$1
+		shift
+		echo "$(IFS="$separator"; echo "${*}")"
+	}
+
+	# Build relative parent directory using the radius value
+	periphery() {
+		local radius=$1
+
+		# Radius 0
+		[[ $radius -gt 0 ]] || return 0
+
+		# Radius 1
+		local -a path=(".")
+
+		# Radius > 1
+		for ((; radius > 1; radius--)); do
+			path+=("..")
+		done
+
+		join '/' "${path[@]}"
+	}
+
+	# Calculate radius of periphery (a relative path) using the center (an absolute path)
+	radius() {
+		local center=$1
+		local periphery=$2
+
+		local -a parts
+		IFS=$'/' read -ra parts <<<"$(realpath --relative-to="$center" "$periphery")"
+		echo "$((${#parts[@]}+1))"
+	}
+
+	# Load this module
+
+	self.load() {
+		# Setup special colors for this side
+		color[bold]=$'\e[1;38;5;11m'
+		color[normal]=$'\e[38;5;11m'
+
+		# Required programs at the local side
+		command -v git &>/dev/null || die "Git required"
+		command -v rsync &>/dev/null || die "Rsync required"
+
+		# Check relative-to flag of realpath.  GNU coreutils version must be >= 8.23
+		realpath --relative-to=. . &>/dev/null || die "GNU coreutils version 8.23 or higher required"
+
+		# Save the absolute path where this program stored
+		readonly PROGFILE=$(readlink -f "$(command -v "$0" 2>/dev/null || true)")
+		[[ -n $PROGFILE ]] || bug "Cannot determine program file"
+	}
+
+	self.load
+}
+
+# Load the modules
+load() {
+	anywhere
+	if [[ -z ${UECH_REMOTE:-} ]]; then
+		here
+	else
+		there
+	fi
+}
+
+# Main invocation
+main() {
+	load
+	self.main "$@"
+}
+
+if [[ "${BASH_SOURCE[0]:-}" == "$0" ]] || [[ -n ${UECH_REMOTE:-} ]]; then
+	main "$@"
+fi
