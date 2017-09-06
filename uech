@@ -408,6 +408,9 @@ here() {
 
 		[[ -n $host ]] || die "No host given"
 
+		# Catch bogus hostname (e.g. file path as hostname)
+		[[ ! $host =~ [/\\] ]] || die "Invalid host name"
+
 		self[host]=$host
 
 		local exe=$1
