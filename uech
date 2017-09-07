@@ -622,8 +622,6 @@ here() {
 			)
 		fi
 
-		[[ -z ${self[debug]} ]] || ssh+=("-v")
-
 		local host=${self[host]}
 
 		# Check if we have a composite hostname, e.g. user@host:port
