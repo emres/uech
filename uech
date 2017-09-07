@@ -17,10 +17,8 @@ readonly VERSION=0.0
 anywhere() {
 	# Color palette
 	declare -Ag color=(
-		[bug]=$'\e[1;38;5;9m'
-		[debug]=$'\e[1;38;5;15m'
 		[reset]=$'\e[0m'
-
+		[dim]=$'\e[1;38;5;254m'
 		[bold]=""
 		[normal]=""
 	)
@@ -37,7 +35,8 @@ anywhere() {
 	}
 
 	bug() {
-		echo -e >&2 "${color[bug]}BUG: $*${color[reset]}\nPlease report	the issue."
+		echo -e >&2 "BUG:   $*"
+		echo -e >&2 "BUG:   Please report the issue"
 		exit 128
 	}
 
@@ -110,7 +109,7 @@ anywhere() {
 		local key
 		for key in "${!self[@]}"; do
 			printf "%10s:  %s\n" "$key" "${self[$key]}"
-		done >&2
+		done | indent >&2
 	}
 
 	# Base functions which should not be overwritten (hence super.)
@@ -134,7 +133,7 @@ anywhere() {
 
 		if [[ -n ${self[debug]} ]]; then
 			debug() {
-				echo -e >&2 "${color[debug]}$*${color[reset]}"
+				echo -e >&2 "DEBUG: $*"
 			}
 		fi
 
