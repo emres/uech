@@ -18,7 +18,7 @@ anywhere() {
 	# Color palette
 	declare -Ag color=(
 		[reset]=$'\e[0m'
-		[dim]=$'\e[1;38;5;254m'
+		[dim]=$'\e[1;38;5;240m'
 		[bold]=""
 		[normal]=""
 	)
@@ -46,6 +46,14 @@ anywhere() {
 
 	indent() {
 		sed 's/^/       /'
+	}
+
+	bold() {
+		echo -en "${color[bold]}-----> ${1}${color[reset]}"
+	}
+
+	dim() {
+		echo -en "${color[dim]}-----> ${1}${color[reset]}"
 	}
 
 	usage() {
@@ -97,7 +105,9 @@ anywhere() {
 
 		self.enter
 
-		echo -e >&2 "${color[bold]}-----> ${heading}${color[reset]}${color[normal]}"
+		echo -en >&2 "${heading}"
+
+		echo -e >&2 "${color[normal]}"
 		"$@" > >(indent) 2> >(indent >&2)
 		echo -e  >&2 "${color[reset]}"
 
@@ -251,7 +261,7 @@ there() {
 			self.debug
 		fi
 
-		self.do "Remote" "${self[exe]}" REMOTE "$@"
+		self.do "$(bold Remote)" "${self[exe]}" REMOTE "$@"
 	}
 
 	# Load this module
@@ -594,16 +604,16 @@ here() {
 			self.debug
 		fi
 
-		self.do "Local-" "${self[exe]}" LOCAL- "$@"
-		self.do "Upload" self.upload
+		self.do "$(bold Local-)" "${self[exe]}" LOCAL- "$@"
+		self.do "$(dim Upload)" self.upload
 
 		self.remote "$@"
 
 		# If radius is zero, there is nothing at the remote side which needs to be downloaded
 		if [[ ${self[radius]} -gt 0 ]]; then
-			self.do "Download" self.download
+			self.do "$(dim Download)" self.download
 		fi
-		self.do "Local+" "${self[exe]}" LOCAL+ "$@"
+		self.do "$(bold Local+)" "${self[exe]}" LOCAL+ "$@"
 	}
 
 	# Wrap ssh
