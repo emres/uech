@@ -714,9 +714,9 @@ here() {
 			)
 		fi
 
-		[[ -z ${self[debug]} ]] || ssh+=(
+		[[ -z ${self[debug]} ]] || flags+=(
 			"-v"
-			"--progress"
+			"-P"
 		)
 
 		if [[ ${#ssh[@]} -gt 0 ]]; then
