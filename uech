@@ -441,10 +441,10 @@ here() {
 		if [[ -z $buffer ]]; then
 			if [[ -z ${self[local]} ]]; then
 				buffer=$(
-					ssh.run /bin/mktemp -d -t x.XXXXXX
+					ssh.run /bin/mktemp -d -t uech.XXXXXX
 				)
 			else
-				buffer=$(/bin/mktemp -d -t x.XXXXXX)
+				buffer=$(/bin/mktemp -d -t uech.XXXXXX)
 			fi
 		else
 			if [[ -z ${self[local]} ]]; then
