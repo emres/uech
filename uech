@@ -15,15 +15,26 @@ readonly VERSION=0.0
 
 # Common functions for both sides (local and remote)
 anywhere() {
+	# UI helpers
+
 	# Color palette
-	declare -Ag color=(
-		[reset]=$'\e[0m'
-		[dim]=$'\e[1;38;5;240m'
-		[bold]=""
-		[normal]=""
+	declare -Ag palette=(
+		[grey]="240"
+		[cyan]="14"
+		[yellow]="11"
 	)
 
-	# UI helpers
+	color.bold() {
+		echo -en "\e[1;38;5;${palette[$1]}m"
+	}
+
+	color.normal() {
+		echo -en "\e[38;5;${palette[$1]}m"
+	}
+
+	color.reset() {
+		echo -en "\e[0m"
+	}
 
 	cry() {
 		echo -e >&2 "$*"
@@ -48,12 +59,14 @@ anywhere() {
 		sed 's/^/       /'
 	}
 
-	bold() {
-		echo -en "${color[bold]}-----> ${1}${color[reset]}"
+	task.start() {
+		local text=$1
+		local color=$2
+		echo -e >&2 "$(color.bold "$color")-----> ${text}$(color.reset)$(color.normal "$color")"
 	}
 
-	dim() {
-		echo -en "${color[dim]}-----> ${1}${color[reset]}"
+	task.end() {
+		echo -e >&2 "$(color.reset)"
 	}
 
 	usage() {
@@ -100,16 +113,17 @@ anywhere() {
 
 	# Do the given action at the center
 	self.do() {
-		local heading=$1
+		local task=$1
+		shift
+
+		local color=$1
 		shift
 
 		self.enter
 
-		echo -en >&2 "${heading}"
-
-		echo -e >&2 "${color[normal]}"
-		"$@" > >(indent) 2> >(indent >&2)
-		echo -e  >&2 "${color[reset]}"
+		task.start "$task" "$color"
+		{ "$@" 2>&1 1>&3 3>&- | indent; } 3>&1 1>&2 | indent
+		task.end
 
 		self.leave
 	}
@@ -134,7 +148,7 @@ anywhere() {
 		# Reset color palette
 		if [[ -n ${self[nocolor]} ]]; then
 			local key
-			for key in "${!color[@]}"; do
+			for key in "${!palette[@]}"; do
 				color[$key]=
 			done
 		fi
@@ -261,16 +275,12 @@ there() {
 			self.debug
 		fi
 
-		self.do "$(bold Remote)" "${self[exe]}" REMOTE "$@"
+		self.do "Remote" "cyan" "${self[exe]}" REMOTE "$@"
 	}
 
 	# Load this module
 
 	self.load() {
-		# Setup special colors for this side
-		color[bold]=$'\e[1;38;5;14m'
-		color[normal]=$'\e[38;5;14m'
-
 		# Chdir to buffer directory at start
 		local buffer=${UECH_REMOTE:?}
 
@@ -604,16 +614,16 @@ here() {
 			self.debug
 		fi
 
-		self.do "$(bold Local-)" "${self[exe]}" LOCAL- "$@"
-		self.do "$(dim Upload)" self.upload
+		self.do "Local-" "yellow" "${self[exe]}" LOCAL- "$@"
+		self.do "Upload" "grey" self.upload
 
 		self.remote "$@"
 
 		# If radius is zero, there is nothing at the remote side which needs to be downloaded
 		if [[ ${self[radius]} -gt 0 ]]; then
-			self.do "$(dim Download)" self.download
+			self.do "Download" "grey" self.download
 		fi
-		self.do "$(bold Local+)" "${self[exe]}" LOCAL+ "$@"
+		self.do "Local+" "yellow" "${self[exe]}" LOCAL+ "$@"
 	}
 
 	# Wrap ssh
@@ -779,10 +789,6 @@ here() {
 	# Load this module
 
 	self.load() {
-		# Setup special colors for this side
-		color[bold]=$'\e[1;38;5;11m'
-		color[normal]=$'\e[38;5;11m'
-
 		# Required programs at the local side
 		command -v git &>/dev/null || die "Git required"
 		command -v rsync &>/dev/null || die "Rsync required"
