@@ -21,8 +21,16 @@ anywhere() {
 	declare -Ag palette=(
 		[grey]="240"
 		[cyan]="14"
+		[red]="197"
 		[yellow]="11"
 	)
+
+	palette.reset() {
+		local color
+		for color in "${!palette[@]}"; do
+			palette[$color]=
+		done
+	}
 
 	color.bold() {
 		echo -en "\e[1;38;5;${palette[$1]}m"
@@ -59,13 +67,19 @@ anywhere() {
 		sed 's/^/       /'
 	}
 
-	task.start() {
-		local text=$1
+	step.start() {
+		local step=$1
 		local color=$2
-		echo -e >&2 "$(color.bold "$color")-----> ${text}$(color.reset)$(color.normal "$color")"
+		echo -e >&2 "$(color.bold "$color")-----> ${step}$(color.reset)$(color.normal "$color")"
 	}
 
-	task.end() {
+	step.failed() {
+		local step=$1
+		local err=$2
+		echo -e >&2 "$(color.bold "red")-----> ${step} step failed with exit code:$(color.reset) $err"
+	}
+
+	step.end() {
 		echo -e >&2 "$(color.reset)"
 	}
 
@@ -111,23 +125,6 @@ anywhere() {
 		popd >/dev/null
 	}
 
-	# Do the given action at the center
-	self.do() {
-		local task=$1
-		shift
-
-		local color=$1
-		shift
-
-		self.enter
-
-		task.start "$task" "$color"
-		{ "$@" 2>&1 1>&3 3>&- | indent; } 3>&1 1>&2 | indent
-		task.end
-
-		self.leave
-	}
-
 	# Dump self
 	self.debug() {
 		local key
@@ -147,10 +144,7 @@ anywhere() {
 	super.init() {
 		# Reset color palette
 		if [[ -n ${self[nocolor]} ]]; then
-			local key
-			for key in "${!palette[@]}"; do
-				color[$key]=
-			done
+			palette.reset
 		fi
 
 		# Setup conditional UI
@@ -275,7 +269,9 @@ there() {
 			self.debug
 		fi
 
-		self.do "Remote" "cyan" "${self[exe]}" REMOTE "$@"
+		self.enter
+		"${self[exe]}" REMOTE "$@"
+		self.leave
 	}
 
 	# Load this module
@@ -557,15 +553,28 @@ here() {
 		local exe
 		exe=$(realpath --relative-to="${periphery:-.}" "${self[exe]}")
 
+		local err=
+
 		if [[ -z ${self[local]} ]]; then
-			ssh.run env "${env[@]}" \
-				bash -s	-- "${flags[@]}" "$exe" "$@" <"$PROGFILE"
+			local progfile
+			progfile=$(ssh.run /bin/mktemp -t uech.XXXXXX) || die "mktemp error"
+
+			ssh.run "cat >'$progfile'" <"$PROGFILE" || err=$?
+			if [[ $err -eq 0 ]]; then
+				ssh.run_with_tty env "${env[@]}" bash "$progfile" "${flags[@]}" "$exe" "$@" || err=$?
+			else
+				cry "Couldn't copy itself"
+			fi
+
+			ssh.run rm -f -- "$progfile" || true
 		else
 			env "${env[@]}" \
 				bash -s	-- "${flags[@]}" "$exe" "$@" <"$PROGFILE"
 		fi
 
 		self.leave
+
+		return $err
 	}
 
 	# Upload files (including the executable) inside the periphery to the remote side
@@ -615,16 +624,43 @@ here() {
 		fi
 
 		self.do "Local-" "yellow" "${self[exe]}" LOCAL- "$@"
+
 		self.do "Upload" "grey" self.upload
 
-		self.remote "$@"
+		self.do "Remote" "cyan" self.remote "$@"
 
 		# If radius is zero, there is nothing at the remote side which needs to be downloaded
 		if [[ ${self[radius]} -gt 0 ]]; then
 			self.do "Download" "grey" self.download
 		fi
+
 		self.do "Local+" "yellow" "${self[exe]}" LOCAL+ "$@"
 	}
+
+	# Do the given action at the center
+	self.do() {
+		local step=$1
+		shift
+
+		local color=$1
+		shift
+
+		local err=
+
+		self.enter
+
+		step.start "$step" "$color"
+		{ "$@" 2>&1 1>&3 3>&- | indent; } 3>&1 1>&2 | indent || err=$?
+		if [[ $err -ne 0 ]]; then
+			step.failed "$step" "$err"
+		fi
+		step.end
+
+		self.leave
+
+		return $err
+	}
+
 
 	# Wrap ssh
 
@@ -705,11 +741,18 @@ here() {
 		ssh "${ssh[@]}" -q -O check "${self[host]}" 2>/dev/null || die "SSH master check failed"
 	}
 
-	# Invoke SSH with the self flags and host
+	# Invoke SSH with the ssh flags and host
 	ssh.run() {
 		debug "Invoking ssh:" "${ssh[@]}" "${self[host]}" "$@"
 		# shellcheck disable=SC2029
 		ssh "${ssh[@]}" "${self[host]}" "$@"
+	}
+
+	# Invoke SSH with pseudo-terminal allocation
+	ssh.run_with_tty() {
+		debug "Invoking ssh:" -t "${ssh[@]}" "${self[host]}" "$@"
+		# shellcheck disable=SC2029
+		ssh -t -o LogLevel=QUIET "${ssh[@]}" "${self[host]}" "$@"
 	}
 
 	# Shutdown SSH connection
