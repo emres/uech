@@ -28,7 +28,7 @@ super() {
 	super.teardown() {
 		if [[ -z $BATS_TEST_COMPLETED ]]; then
 			touch "${BATS_PARENT_TMPNAME}.skip"
-			[[ ${#cleanup[@]} -eq 0 ]] || cry "Did not remove ${cleanup[*]} as test failed"
+			[[ ${#cleanup[@]} -eq 0 ]] || cry "Did not remove $(join ' ' "${cleanup[@]}") as test failed"
 		else
 			rm -rf -- "${cleanup[@]}"
 		fi
@@ -43,11 +43,8 @@ with_ssh() {
 
 		super.setup_once
 
-		if command -v nc >/dev/null; then
-			nc -z localhost 2222 2>/dev/null || die "SSH unreachable"
-		fi
-
 		pushd "$BATS_TEST_DIRNAME" >/dev/null
+		vagrant up # FIXME
 		vagrant ssh-config --host '*' >"$SSH_CONFIG"
 		popd >/dev/null
 		echo
@@ -62,9 +59,7 @@ with_ssh() {
 		super.setup
 
 		UECH_BUFFER=$(
-			ssh -F "$SSH_CONFIG" example.com bash -s <<-EOF
-				readlink -f .cache/uech
-			EOF
+			ssh -F "$SSH_CONFIG" example.com readlink -m .cache/uech
 		)
 		export UECH_BUFFER
 
@@ -114,7 +109,7 @@ without_ssh() {
 	self.setup() {
 		super.setup
 
-		UECH_BUFFER=$(readlink -f "$PWD/../buffer")
+		UECH_BUFFER=$(readlink -m "$PWD/../buffer")
 		export UECH_BUFFER
 
 		uech.default() {
@@ -193,6 +188,12 @@ die() {
 	exit 1
 }
 
+join() {
+	local separator=$1
+	shift
+	echo "$(IFS="$separator"; echo "${*}")"
+}
+
 file.create() {
 	local file=$1
 	shift
@@ -229,7 +230,7 @@ declare -ag cleanup=()
 fixture.enter() {
 	local tmpdir
 
-	tmpdir="$(mktemp -d "${BATS_TMPDIR:-/tmp}/uech.XXXXX")"
+	tmpdir=$(mktemp -d "${BATS_TMPDIR:-/tmp}/uech.XXXXX")
 	cleanup+=("$tmpdir")
 
 	pushd "$tmpdir" &>/dev/null || exit 1
