@@ -437,7 +437,7 @@ Local() {
 					value=${1:-}
 					;;
 				esac
-				[[ -n $value ]] || die "Argument required for flag: '-radius'"
+				[[ -n $value ]] || die "Value required for flag: '-radius'"
 				[[ $value =~ [0-9]+ ]] || die "Radius must be an integer: '$value'"
 
 				Self[radius]=$value
@@ -456,7 +456,7 @@ Local() {
 					value=${1:-}
 					;;
 				esac
-				[[ -n $value ]] || die "Argument required for flag: '-buffer'"
+				[[ -n $value ]] || die "Value required for flag: '-buffer'"
 
 				Self[buffer]=$value
 				;;
@@ -475,7 +475,7 @@ Local() {
 					value=${1:-}
 					;;
 				esac
-				[[ -n $value ]] || die "Argument required for flag: '-config'"
+				[[ -n $value ]] || die "Value required for flag: '-config'"
 				[[ -f $value ]] || die "No such file: '$value'"
 
 				Self[config]=$(readlink -f "$value")
