@@ -675,8 +675,7 @@ Local() {
 
 			ssh.run rm -f -- "$progfile" || true
 		else
-			env "${env[@]}" \
-				bash -s	-- "${Remote[@]}" "$exe" "$@" <"$PROGFILE"
+			env "${env[@]}" bash -s	-- "${Remote[@]}" "$exe" "$@" <"$PROGFILE"
 		fi
 
 		self.leave
