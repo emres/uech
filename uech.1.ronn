@@ -108,6 +108,9 @@ bilgi edinmek için lütfen **OPTIONS** bölümünde ilgili seçenekleri okuyun.
   * `-nocolor`:
     Ekran çıktılarını renklendirme.
 
+  * `-quiet`:
+    Minimal arayüz çıktısı üreterek sessiz ol.
+
   * `-version`:
     Sürüm bilgisi ver.
 
