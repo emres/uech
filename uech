@@ -411,7 +411,7 @@ Local() {
 		[radius]=""  # radius from the working directory
 	)
 
-	declare -ag Flags=() # flags to transfer to the remote side
+	declare -ag Remote=() # flags to transfer to the remote side
 
 	# Process options
 	self.flags() {
@@ -458,7 +458,7 @@ Local() {
 				;;
 			-keep)
 				Self[keep]=true
-				Flags+=("$arg")
+				Remote+=("$arg")
 				;;
 			-config|-config=*)
 				local value
@@ -478,25 +478,25 @@ Local() {
 				;;
 			-local)
 				Self[local]=true
-				Flags+=("$arg")
+				Remote+=("$arg")
 				;;
 			-clean)
 				Self[clean]=true
 				;;
 			-nocolor)
 				Self[nocolor]=true
-				Flags+=("$arg")
+				Remote+=("$arg")
 				;;
 			-noreuse)
 				Self[noreuse]=true
 				;;
 			-debug)
 				Self[debug]=true
-				Flags+=("$arg")
+				Remote+=("$arg")
 				;;
 			-quiet)
 				Self[quiet]=true
-				Flags+=("$arg")
+				Remote+=("$arg")
 				;;
 			-version)
 				echo "$VERSION"
@@ -668,7 +668,7 @@ Local() {
 
 			ssh.run "cat >'$progfile'" <"$PROGFILE" || err=$?
 			if [[ $err -eq 0 ]]; then
-				ssh.run_with_tty env "${env[@]}" bash "$progfile" "${Flags[@]}" "$exe" "$@"  || err=$?
+				ssh.run_with_tty env "${env[@]}" bash "$progfile" "${Remote[@]}" "$exe" "$@"  || err=$?
 			else
 				cry "Couldn't copy itself"
 			fi
@@ -676,7 +676,7 @@ Local() {
 			ssh.run rm -f -- "$progfile" || true
 		else
 			env "${env[@]}" \
-				bash -s	-- "${Flags[@]}" "$exe" "$@" <"$PROGFILE"
+				bash -s	-- "${Remote[@]}" "$exe" "$@" <"$PROGFILE"
 		fi
 
 		self.leave
