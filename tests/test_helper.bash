@@ -35,16 +35,16 @@ super() {
 	}
 }
 
-with_ssh() {
+on_vagrant() {
 	export SSH_CONFIG=${BATS_TMPDIR:?}/example.com
 
 	self.setup_once() {
-		cry "Testing with SSH"
+		cry "Testing through Vagrant (wait a moment for setup)"
 
 		super.setup_once
 
 		pushd "$BATS_TEST_DIRNAME" >/dev/null
-		vagrant up # FIXME
+		vagrant up
 		vagrant ssh-config --host '*' >"$SSH_CONFIG"
 		popd >/dev/null
 		echo
@@ -97,7 +97,7 @@ with_ssh() {
 	}
 }
 
-without_ssh() {
+on_local() {
 	self.setup_once() {
 		cry "Testing locally"
 	}
@@ -140,10 +140,18 @@ without_ssh() {
 }
 
 super
-if [[ -n $UECH_BATS_WITH_SSH ]]; then
-	with_ssh
+if [[ -n $BATS_VAGRANT ]]; then
+	on_vagrant
+
+	using_ssh() {
+		return 0
+	}
 else
-	without_ssh
+	on_local
+
+	using_ssh() {
+		return 1
+	}
 fi
 
 setup() {
@@ -192,6 +200,10 @@ join() {
 	local separator=$1
 	shift
 	echo "$(IFS="$separator"; echo "${*}")"
+}
+
+cr() {
+	echo -en "$1\r"
 }
 
 file.create() {

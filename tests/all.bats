@@ -54,6 +54,34 @@ load test_helper
 	assert_output_contains OK 3
 }
 
+@test "Run quiet" {
+	exe.create ok "echo OK"
+	run uech.default -quiet example.com ok
+
+	refute_line 3
+
+	assert_line_start_with 0 "OK"
+	assert_line_start_with 1 "OK"
+	assert_line_start_with 2 "OK"
+}
+
+@test "No CR seen by default" {
+	exe.create ok '[[ ! $1 == REMOTE ]] || echo OK'
+	run uech.stdout example.com ok
+
+	refute_line 1
+	assert_line 0 "       OK"
+}
+
+@test "CR seen on SSH if quiet" {
+	using_ssh || skip
+	exe.create ok '[[ ! $1 == REMOTE ]] || echo OK'
+	run uech.stdout -quiet example.com ok
+
+	refute_line 1
+	assert_line 0 "$(echo -en "OK\r")"
+}
+
 @test "Pass correct arguments to the executable" {
 	exe.create a 'for arg; do echo "$arg"; done'
 
@@ -68,6 +96,30 @@ load test_helper
 	assert_line 4 "       LOCAL+"
 	assert_line 5 "       myarg"
 }
+
+@test "Exit on error" {
+	exe.create ok <<-'EOF'
+		echo $1
+		case $1 in
+		LOCAL-)
+			;;
+		REMOTE)
+			exit 123
+			;;
+		LOCAL+)
+			;;
+		esac
+	EOF
+	run uech.default -quiet example.com ok
+
+	assert_exit_status 123
+
+	refute_line 2
+
+	assert_line_start_with 0 "LOCAL-"
+	assert_line_start_with 1 "REMOTE"
+}
+
 
 @test "Copy files inside periphery" {
 	exe.create a/aa/aaa ""

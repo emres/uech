@@ -134,3 +134,58 @@ assert_exit_status() {
 	assert_equal "$status" "$1"
 }
 
+assert_start_with() {
+	case $1 in
+	$2*)
+		return 0
+		;;
+	esac
+	{
+		echo "expected: $1"
+		echo "actual:   $2"
+	} | flunk
+}
+
+assert_line_start_with() {
+	if [[ $1 -ge 0 ]] 2>/dev/null; then
+		assert_start_with "${lines[$1]}" "$2"
+	else
+		local line
+		for line in "${lines[@]}"; do
+			case $line in
+			$1*)
+				continue
+				;;
+			esac
+			flunk "expected line '$1'"
+		done
+	fi
+}
+
+assert_end_with() {
+	case $1 in
+	*$2)
+		return 0
+		;;
+	esac
+	{
+		echo "expected: $1"
+		echo "actual:   $2"
+	} | flunk
+}
+
+assert_line_end_with() {
+	if [[ $1 -ge 0 ]] 2>/dev/null; then
+		assert_end_with "${lines[$1]}" "$2"
+	else
+		local line
+		for line in "${lines[@]}"; do
+			case $line in
+			*$1)
+				continue
+				;;
+			esac
+			flunk "expected line '$1'"
+		done
+	fi
+}
