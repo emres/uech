@@ -12,7 +12,7 @@
 .br
 .
 .SH "DESCRIPTION"
-\fBUech\fR yerelde kayıtlı bulunan bir programı sırasıyla yerelde, uzak konakta ve tekrar yerelde çalıştırır\. Uzağa geçmeden önce programın kendisiyle birlikte, isteğe bağlı olarak, programın bulunduğu dizin veya üst dizinleri de ("çevre") karşı tarafa kopyalar ve tekrar yerele geçildiğinde uzağa kopyalanan bu çevreyi yerele geri taşır\. Program çalıştırılırken hangi fazda bulunduğunu komut satırında geçilen ilk argümanın sırasıyla aşağıda listelenen değerleriyle öğrenir:
+\fBUech\fR, \fB\-mono\fR seçeneği verilmediği sürece yerelde kayıtlı bulunan bir programı sırasıyla yerelde, uzak konakta ve tekrar yerelde çalıştırır\. Uzağa geçmeden önce programın kendisiyle birlikte, isteğe bağlı olarak, programın bulunduğu dizin veya üst dizinleri de ("çevre") karşı tarafa kopyalar ve tekrar yerele geçildiğinde uzağa kopyalanan bu çevreyi yerele geri taşır\. Program çalıştırılırken hangi fazda bulunduğunu komut satırında geçilen ilk argümanın sırasıyla aşağıda listelenen değerleriyle öğrenir:
 .
 .IP "\(bu" 4
 \fBLOCAL\-\fR: Yerelde ilk faz
@@ -26,7 +26,10 @@
 .IP "" 0
 .
 .P
-\fBUech\fR açık uçlu bir araçtır\. Programın çalıştırılabilir bir dosya olması dışında ne yaptığıyla ilgilenmez ve onu daima yukarıda listelenen argümanlarla 3 kez çalıştırır\. Komut satırında programa ilave olarak verilen argümanlar varsa bunlar da ikinci pozisyonel argümandan itibaren programa geçilir\.
+\fBUech\fR açık uçlu bir araçtır\. Programın çalıştırılabilir bir dosya olması dışında ne yaptığıyla ilgilenmez ve öntanımlı olarak onu daima yukarıda listelenen argümanlarla 3 kez çalıştırır\. Komut satırında programa ilave olarak verilen argümanlar varsa bunlar da ikinci pozisyonel argümandan itibaren programa geçilir\.
+.
+.P
+\fBUech\fR \fB\-mono\fR seçeneğiyle çalıştırılırsa program sadece bir defa, uzakta çalıştırılır\. Bu "tek fazlı" kipte ayrıştırılması gereken bir faz olmadığından programa ilk argüman olarak herhangi bir faz bilgisi geçirilmez; sadece komut satırındaki fazladan argümanlar geçirilir\.
 .
 .P
 Bazı programlar çalıştırılırken dış dosyalara ihtiyaç duyabilir veya uzakta çalıştırdığımız programın ürettiği dosyaları aynı mekanizmayla yerele geri taşımak isteyebiliriz\. Bu amaçla \fBUech\fR, "programın çevresi" olarak adlandırılan göreceli alanı hesaplanmasında \fB\-radius\fR seçeneğini dikkate alır\. Öntanımlı olarak program çevresiz kabul edilir (yarıçap \fB0\fR) ve yerelden uzağa geçilirken sadece programın kendisi kopyalanır\. Bu davranış hakkında ayrıntılı bilgi edinmek için lütfen \fBOPTIONS\fR bölümünde ilgili seçenekleri okuyun\.
@@ -97,6 +100,9 @@ Git tarafından göz ardı edilen dosyalar (gitignore(5)) karşı tarafa dosya y
 .
 .IP
 Normalde \fBUech\fR tampon dizini mktemp(1) ile güvenli şekilde rastgele oluşturur\. Yeri önceden bilinen bir tampon alanına ihtiyacınız varsa bu seçeneği kullanın\. Özellikle \fB\-keep\fR seçeneği ile birlikte yararlı olabilir\.
+.
+.IP "\(bu" 4
+\fB\-mono\fR: Programı sadece bir defa, uzak tarafta çalıştır; yerelde çalıştırma\. Bu kipte programa ilk argüman olarak \fBREMOTE\fR geçirilmez; sadece komut satırındaki fazladan argümanlar geçirilir\.
 .
 .IP "\(bu" 4
 \fB\-keep\fR: Çıkışta tampon dizini koru\.

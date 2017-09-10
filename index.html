@@ -81,13 +81,13 @@
 
 <h2 id="DESCRIPTION">DESCRIPTION</h2>
 
-<p><strong>Uech</strong> yerelde kayıtlı bulunan bir programı sırasıyla yerelde, uzak konakta ve
-tekrar yerelde çalıştırır.  Uzağa geçmeden önce programın kendisiyle birlikte,
-isteğe bağlı olarak, programın bulunduğu dizin veya üst dizinleri de ("çevre")
-karşı tarafa kopyalar ve tekrar yerele geçildiğinde uzağa kopyalanan bu çevreyi
-yerele geri taşır.  Program çalıştırılırken hangi fazda bulunduğunu komut
-satırında geçilen ilk argümanın sırasıyla aşağıda listelenen değerleriyle
-öğrenir:</p>
+<p><strong>Uech</strong>, <code>-mono</code> seçeneği verilmediği sürece yerelde kayıtlı bulunan bir
+programı sırasıyla yerelde, uzak konakta ve tekrar yerelde çalıştırır.  Uzağa
+geçmeden önce programın kendisiyle birlikte, isteğe bağlı olarak, programın
+bulunduğu dizin veya üst dizinleri de ("çevre") karşı tarafa kopyalar ve tekrar
+yerele geçildiğinde uzağa kopyalanan bu çevreyi yerele geri taşır.  Program
+çalıştırılırken hangi fazda bulunduğunu komut satırında geçilen ilk argümanın
+sırasıyla aşağıda listelenen değerleriyle öğrenir:</p>
 
 <ul>
 <li><p><code>LOCAL-</code>: Yerelde ilk faz</p></li>
@@ -97,9 +97,15 @@ satırında geçilen ilk argümanın sırasıyla aşağıda listelenen değerler
 
 
 <p><strong>Uech</strong> açık uçlu bir araçtır.  Programın çalıştırılabilir bir dosya olması
-dışında ne yaptığıyla ilgilenmez ve onu daima yukarıda listelenen argümanlarla 3
-kez çalıştırır.  Komut satırında programa ilave olarak verilen argümanlar varsa
-bunlar da ikinci pozisyonel argümandan itibaren programa geçilir.</p>
+dışında ne yaptığıyla ilgilenmez ve öntanımlı olarak onu daima yukarıda
+listelenen argümanlarla 3 kez çalıştırır.  Komut satırında programa ilave olarak
+verilen argümanlar varsa bunlar da ikinci pozisyonel argümandan itibaren
+programa geçilir.</p>
+
+<p><strong>Uech</strong> <code>-mono</code> seçeneğiyle çalıştırılırsa program sadece bir defa, uzakta
+çalıştırılır.  Bu "tek fazlı" kipte ayrıştırılması gereken bir faz olmadığından
+programa ilk argüman olarak herhangi bir faz bilgisi geçirilmez; sadece komut
+satırındaki fazladan argümanlar geçirilir.</p>
 
 <p>Bazı programlar çalıştırılırken dış dosyalara ihtiyaç duyabilir veya uzakta
 çalıştırdığımız programın ürettiği dosyaları aynı mekanizmayla yerele geri
@@ -171,6 +177,10 @@ kullanıcısına ait) <code>$HOME</code> dizinidir.</p>
 oluşturur.  Yeri önceden bilinen bir tampon alanına ihtiyacınız varsa bu
 seçeneği kullanın.  Özellikle <code>-keep</code> seçeneği ile birlikte yararlı
 olabilir.</p></li>
+<li><p><code>-mono</code>:
+Programı sadece bir defa, uzak tarafta çalıştır; yerelde çalıştırma.  Bu
+kipte programa ilk argüman olarak <code>REMOTE</code> geçirilmez; sadece komut
+satırındaki fazladan argümanlar geçirilir.</p></li>
 <li><p><code>-keep</code>:
 Çıkışta tampon dizini koru.</p></li>
 <li><p><code>-clean</code>:

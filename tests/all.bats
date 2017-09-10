@@ -82,7 +82,7 @@ load test_helper
 	assert_line 0 "$(echo -en "OK\r")"
 }
 
-@test "Pass correct arguments to the executable" {
+@test "Pass correct arguments" {
 	exe.create a 'for arg; do echo "$arg"; done'
 
 	run uech.stdout example.com a myarg
@@ -95,6 +95,22 @@ load test_helper
 	assert_line 3 "       myarg"
 	assert_line 4 "       LOCAL+"
 	assert_line 5 "       myarg"
+}
+
+@test "Run mono" {
+	exe.create ok "echo OK"
+	run uech.default -mono example.com ok
+	assert_output_contains OK 1
+}
+
+@test "Pass correct arguments when mono" {
+	exe.create a 'for arg; do echo "$arg"; done'
+
+	run uech.stdout -mono example.com a myarg
+	assert_success
+
+	refute_line 1
+	assert_line 0 "       myarg"
 }
 
 @test "Exit on error" {

@@ -7,13 +7,13 @@ uech(1) -- yerelde, uzakta ve yerelde çalıştır
 
 ## DESCRIPTION
 
-**Uech** yerelde kayıtlı bulunan bir programı sırasıyla yerelde, uzak konakta ve
-tekrar yerelde çalıştırır.  Uzağa geçmeden önce programın kendisiyle birlikte,
-isteğe bağlı olarak, programın bulunduğu dizin veya üst dizinleri de ("çevre")
-karşı tarafa kopyalar ve tekrar yerele geçildiğinde uzağa kopyalanan bu çevreyi
-yerele geri taşır.  Program çalıştırılırken hangi fazda bulunduğunu komut
-satırında geçilen ilk argümanın sırasıyla aşağıda listelenen değerleriyle
-öğrenir:
+**Uech**, `-mono` seçeneği verilmediği sürece yerelde kayıtlı bulunan bir
+programı sırasıyla yerelde, uzak konakta ve tekrar yerelde çalıştırır.  Uzağa
+geçmeden önce programın kendisiyle birlikte, isteğe bağlı olarak, programın
+bulunduğu dizin veya üst dizinleri de ("çevre") karşı tarafa kopyalar ve tekrar
+yerele geçildiğinde uzağa kopyalanan bu çevreyi yerele geri taşır.  Program
+çalıştırılırken hangi fazda bulunduğunu komut satırında geçilen ilk argümanın
+sırasıyla aşağıda listelenen değerleriyle öğrenir:
 
 - `LOCAL-`: Yerelde ilk faz
 
@@ -22,9 +22,15 @@ satırında geçilen ilk argümanın sırasıyla aşağıda listelenen değerler
 - `LOCAL+`: Yerelde son faz
 
 **Uech** açık uçlu bir araçtır.  Programın çalıştırılabilir bir dosya olması
-dışında ne yaptığıyla ilgilenmez ve onu daima yukarıda listelenen argümanlarla 3
-kez çalıştırır.  Komut satırında programa ilave olarak verilen argümanlar varsa
-bunlar da ikinci pozisyonel argümandan itibaren programa geçilir.
+dışında ne yaptığıyla ilgilenmez ve öntanımlı olarak onu daima yukarıda
+listelenen argümanlarla 3 kez çalıştırır.  Komut satırında programa ilave olarak
+verilen argümanlar varsa bunlar da ikinci pozisyonel argümandan itibaren
+programa geçilir.
+
+**Uech** `-mono` seçeneğiyle çalıştırılırsa program sadece bir defa, uzakta
+çalıştırılır.  Bu "tek fazlı" kipte ayrıştırılması gereken bir faz olmadığından
+programa ilk argüman olarak herhangi bir faz bilgisi geçirilmez; sadece komut
+satırındaki fazladan argümanlar geçirilir.
 
 Bazı programlar çalıştırılırken dış dosyalara ihtiyaç duyabilir veya uzakta
 çalıştırdığımız programın ürettiği dosyaları aynı mekanizmayla yerele geri
@@ -94,6 +100,11 @@ bilgi edinmek için lütfen **OPTIONS** bölümünde ilgili seçenekleri okuyun.
     oluşturur.  Yeri önceden bilinen bir tampon alanına ihtiyacınız varsa bu
     seçeneği kullanın.  Özellikle `-keep` seçeneği ile birlikte yararlı
     olabilir.
+
+  * `-mono`:
+    Programı sadece bir defa, uzak tarafta çalıştır; yerelde çalıştırma.  Bu
+    kipte programa ilk argüman olarak `REMOTE` geçirilmez; sadece komut
+    satırındaki fazladan argümanlar geçirilir.
 
   * `-keep`:
     Çıkışta tampon dizini koru.

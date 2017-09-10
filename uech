@@ -292,6 +292,7 @@ Remote() {
 		[exe]=""     # absolute path of the executable
 		[keep]=""    # keep remote store?
 		[local]=""   # local mode?
+		[mono]=""    # run mono (i.e. only at remote)?
 		[nocolor]="" # no color?
 		[quiet]=""   # be quiet?
 	)
@@ -310,6 +311,9 @@ Remote() {
 				;;
 			-keep)
 				Self[keep]=true
+				;;
+			-mono)
+				Self[mono]=true
 				;;
 			-nocolor)
 				Self[nocolor]=true
@@ -371,7 +375,11 @@ Remote() {
 		ui.debug "Remote" self.puts
 
 		self.enter
-		"${Self[exe]}" REMOTE "$@"
+		if [[ -z ${Self[mono]} ]]; then
+			"${Self[exe]}" REMOTE "$@"
+		else
+			"${Self[exe]}" "$@"
+		fi
 		self.leave
 	}
 
@@ -409,6 +417,7 @@ Local() {
 		[host]=""    # ssh host
 		[keep]=""    # keep remote store?
 		[local]=""   # local mode?
+		[mono]=""    # run mono (i.e. only at remote)?
 		[nocolor]="" # no color?
 		[noreuse]="" # no reuse ssh connection?
 		[quiet]=""   # be quiet?
@@ -486,6 +495,10 @@ Local() {
 				;;
 			-clean)
 				Self[clean]=true
+				;;
+			-mono)
+				Self[mono]=true
+				Remote+=("$arg")
 				;;
 			-nocolor)
 				Self[nocolor]=true
@@ -732,11 +745,11 @@ Local() {
 
 		self.enter
 
-		ui.do Local- "${Self[exe]}" LOCAL- "$@"
+		[[ -n ${Self[mono]} ]] || ui.do Local- "${Self[exe]}" LOCAL- "$@"
 		ui.do Upload self.upload
 		ui.do Remote self.remote "$@"
 		[[ ${Self[radius]} -eq 0 ]] || ui.do Download self.download # for radius zero, nothing to download
-		ui.do Local+ "${Self[exe]}" LOCAL+ "$@"
+		[[ -n ${Self[mono]} ]] || ui.do Local+ "${Self[exe]}" LOCAL+ "$@"
 
 		self.leave
 	}
