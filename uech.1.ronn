@@ -130,7 +130,7 @@ bilgi edinmek için lütfen **OPTIONS** bölümünde ilgili seçenekleri okuyun.
 
 ## EXAMPLES
 
-Yerelde bir program derle, üzakta çalıştır, üretilen veriyi yerele kopyala:
+Yerelde bir program derle, uzakta çalıştır, üretilen veriyi yerele kopyala:
 
         $ cat program
         #!/bin/bash
